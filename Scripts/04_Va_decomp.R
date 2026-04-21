@@ -444,6 +444,14 @@ tbl_contrast <-
     map(\(col_) summarise_chains(col_, with_p = TRUE)) |>
     bind_rows(.id = "Param")
 
+# Testing Shape/Size differences
+tbl_shape_size <-
+    bind_rows(var_decomp_all_F |> mutate(Sex = "F", .before = 1),
+              var_decomp_all_M |> mutate(Sex = "M", .before = 1)) |>
+    mutate(LR_Shape_Size = log10(Herit_Shape / Herit_Size)) |>
+    select(Sex, LR_Shape_Size) |>
+    summarise(summarise_chains(LR_Shape_Size, with_p = TRUE), .by = Sex)
+
 ## --- Computing V_Add, V_A and V_AxE and their decomposition for recruits ----
 
 ## Getting average V_Tot for males and females to compute heritabilites
@@ -663,6 +671,16 @@ tbl_plot_h2 <-
                              Herit = "h^2",
                              Herit_B = "H^2"),
            Sex      = factor(Sex, levels = c("F", "M", "J")))
+
+# Difference between sexes at each ages
+tbl_diff_age <-
+    tbl_plot_h2 |> 
+    filter(Age > 0, Herit == "h^2") |> 
+    mutate(Sim = 1:n(), .by = !Estimate) |> 
+    pivot_wider(names_from = Sex, values_from = Estimate) |>
+    mutate(LR_Sex = log10(F/M)) |>
+    summarise(summarise_chains(LR_Sex, with_p = TRUE),
+              .by = Age)
 
 p_herit <-
     ggplot(tbl_plot_h2) +

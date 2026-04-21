@@ -57,12 +57,21 @@ collapse_to_one <- function(vec) {
     }
 }
 
+## Convert to character with significant digits and trailing zeros
+# Args : - num: a number
+#        - digits: significant figures
+# Value : a character string with significant digits (and trailing zeros)
+to_signif <- function(num, digits) {
+    sprintf(paste0('%#.', digits, 'g'), signif(num, digits))
+}
+
 ## LaTeX scientific notation
 # Args : - num: a number
+#        - digits: significant figures
 # Value : a character string with LaTeX formatted scientific notations
-latex_sci <- function(num) {
+latex_sci <- function(num, digits) {
     exp     <- floor(log10(num))
-    base    <- num * 10^(-exp)
+    base    <- to_signif(num * 10^(-exp), digits)
     stringr::str_c(base,"\\text{\\textsc{e",exp,"}}")
 }
 

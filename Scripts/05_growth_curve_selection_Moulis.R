@@ -30,7 +30,7 @@ set.seed(seed)
 theme_set(theme_bw())
 # Colours for males and females
 col_sex <- c("#55aa00", "#00007f")
-col_sex_points <- c("#a4ff7d", "#5560ff")
+col_sex_points <- c("#a4ff7d44", "#5560ff44")
 
 ## Setting up parallelisation
 ncores <- min(parallel::detectCores() - 2, 20)
@@ -208,7 +208,7 @@ write_ods(out_waic,
 ## ------------------------------------ Graphical comparison of all models ----
 
 # Setting up a dodge width for everything
-dodge_width <- 0.2
+dodge_width <- 0.5
 
 # Getting the average size at birth for females and males
 mean_nb_size <-
@@ -222,13 +222,21 @@ p_base <-
     ggplot() +
     geom_count(aes(x = Age,
                    y = Size,
+                   fill = Sex,
                    colour = Sex),
+               shape = 21,
+#                alpha = 0.2,
+#                fill = "#FFFFFF00",
                position = position_dodge(width = dodge_width),
                data = tbl_capt) +
     scale_x_continuous(breaks = scales::breaks_pretty(),
-                       limits = c(-0.05,10.2)) +
-    scale_size_area(max_size = 3) +
-    scale_colour_manual(values = col_sex_points) +
+                       limits = c(-0.5,10.2)) +
+    scale_size_area(max_size = 3,
+                    transform = "sqrt",
+                    limits = c(1, 200),
+                    breaks = c(1, 5, 20, 50, 100, 200)) +
+    scale_fill_manual(values = col_sex_points) +
+    scale_colour_manual(values = col_sex) +
     ylim(c(15, 80))
 
 # A function to generate the parametrised growth curves
@@ -299,7 +307,8 @@ p_comp <-
     p_base +
     tbl_func_comp[["Plot"]] +
     facet_grid(Name ~ .) +
-    theme(legend.position = "bottom")
+    theme(legend.position = "bottom") +
+    labs(y = "Size (mm)", x = "Age (years)")
 
 cairo_pdf(here("Figures/Moulis_Comparison_Growth_Curves.pdf"), width = 7, height = 8)
 plot(p_comp)
@@ -356,7 +365,8 @@ tbl_func_final <-
 p_final <-
     p_base +
     tbl_func_final[["Plot"]] +
-    theme(legend.position = "bottom")
+    theme(legend.position = "bottom") +
+    labs(y = "Size (mm)", x = "Age (years)")
 
 saveRDS(p_final, file = here("Output/Object_Final_Growth_Curve_Moulis.rds"))
 

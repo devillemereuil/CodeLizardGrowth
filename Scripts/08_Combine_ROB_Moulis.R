@@ -60,7 +60,7 @@ tex_waic <-
                           str_remove("_(ROB|Moulis)")) |>
     column_spec(1, bold = TRUE, background = "blue!5!white!90!black") |>
     row_spec(0, bold = TRUE, background = "blue!15!gray") |>
-    add_header_above(c("", "Wild" = 3, "Experimental" = 3),
+    add_header_above(c("", "Wild" = 3, "Mesocosm" = 3),
                      background = "blue!15!gray",
                      bold = TRUE,
                      line = FALSE,
@@ -78,7 +78,7 @@ p_mls <- readRDS(here("Output/Object_Final_Growth_Curve_Moulis.rds"))
 
 # Combined graphics
 cairo_pdf(here("Figures/Both_Final_Growth_Curve.pdf"), width = 12, height = 5)
-plot((p_rob + ggtitle("Wild")) + (p_mls + ggtitle("Experimental")) +
+plot((p_rob + ggtitle("Wild")) + (p_mls + ggtitle("Mesocosm")) +
      plot_layout(guides = "collect") &
      theme(legend.position = "bottom",
            legend.spacing.x = unit(3, "cm")))
@@ -123,10 +123,10 @@ tbl_est <-
            across(where(is.numeric),
                   \(col_) {
                       if_else(col_ < 1e-2,
-                                  latex_sci(col_),
-                                  as.character(col_))
+                                  latex_sci(col_, 3),
+                                  to_signif(col_, 3))
                   }),
-           Out = str_glue("${Median}$\\par\\scriptsize $[{Low},{Up}]$")) |>
+           Out = str_glue("${Median}$\\par\\scriptsize $[{Low},{Up}]$")) |>  
     select(Population, Sex, Parameter, Estimate, Out) |>
     mutate(Estimate = factor(Estimate,
                              levels = c("Mean",
@@ -147,7 +147,9 @@ tbl_est <-
                       str_replace("Mean",
                                   "$\\\\mu$") |>
                       str_replace("Herit",
-                                  "$h^{2}$"),
+                                  "$h^{2}$") |>
+                      str_replace("V_\\{\\\\text\\{P\\}\\}",
+                                  "V_{\\\\text{Par}}"),
            Parameter = recode(Parameter,
                               L0    = "$L_{0}$",
                               k     = "$k$",
@@ -192,7 +194,7 @@ latex_est <-
                      line = FALSE,
                      line_sep = 0) |>
     add_header_above(case_when(str_detect(colnames(tbl_est), "ROB")    ~ "Wild",
-                               str_detect(colnames(tbl_est), "Moulis") ~ "Experimental",
+                               str_detect(colnames(tbl_est), "Moulis") ~ "Mesocosm",
                                .default = "") |>
                      group_col(),
                      background = "blue!15!gray",
@@ -200,7 +202,7 @@ latex_est <-
                      line = TRUE,
                      line_sep = 3) |>
     str_remove_all("\\\\(begin|end)\\{table\\}(\n)?") |>
-    str_replace("\\\\cmidrule", 
+    str_replace("\\\\cmidrule",
                 "\\\\arrayrulecolor{blue!15!gray} \\\\specialrule{6pt}{0pt}{-6pt} \\\\arrayrulecolor{black} \\\\cmidrule") |>
     str_replace(fixed("\\cellcolor{blue!15!gray}{Estim.}"),
                 "\\arrayrulecolor{blue!15!gray} \\specialrule{6pt}{0pt}{-6pt} \\arrayrulecolor{black} \\cmidrule(l{3pt}r{3pt}){3-4} \\cmidrule(l{3pt}r{3pt}){5-6} \\cmidrule(l{3pt}r{3pt}){8-9} \\cmidrule(l{3pt}r{3pt}){10-11}\n \\cellcolor{blue!15!gray}{Estim.}")
@@ -249,8 +251,8 @@ tbl_decomp <-
            across(where(is.numeric),
                   \(col_) {
                       if_else(col_ < 1e-3,
-                                  latex_sci(col_),
-                                  as.character(col_))
+                                  latex_sci(col_, 3),
+                                  to_signif(col_, 3))
                   }),
            Out = str_glue("${Median}$\\par\\scriptsize $[{Low},{Up}]$")) |>
     select(Population, Sex, Estimate, Out) |>
@@ -291,7 +293,7 @@ latex_decomp <-
                 width = "2.3cm",
                 latex_valign = "m") |>
     row_spec(0, background = "blue!15!gray") |>
-    add_header_above(c("", "Wild" = 2, "Experimental" = 2),
+    add_header_above(c("", "Wild" = 2, "Mesocosm" = 2),
                      background = "blue!15!gray",
                      bold = TRUE,
                      line = TRUE,
@@ -309,8 +311,8 @@ latex_decomp <-
               background = "blue!5!white!90!black",
               escape = FALSE) |>
     str_remove_all("\\\\(begin|end)\\{table\\}(\n)?") |>
-    str_replace("\\\\cmidrule", 
-                "\\\\arrayrulecolor{blue!15!gray} \\\\specialrule{6pt}{0pt}{-6pt} \\\\arrayrulecolor{black} \\\\cmidrule") 
+    str_replace("\\\\cmidrule",
+                "\\\\arrayrulecolor{blue!15!gray} \\\\specialrule{6pt}{0pt}{-6pt} \\\\arrayrulecolor{black} \\\\cmidrule")
 
 write_file(latex_decomp, file = here("Tables/Both_estimates_reacnorm.tex"))
 
@@ -428,7 +430,7 @@ p_decomp_rob <-
                      ylab  = "Value")
 p_decomp_mls <-
     generate_plot_decomp(tbl_decomp |> filter(Population == "Moulis"),
-                         title = "Experimental",
+                         title = "Mesocosm",
                          ylab  = "")
 
 cairo_pdf(here("Figures/Both_full_decomp.pdf"), width = 10, height = 10)
